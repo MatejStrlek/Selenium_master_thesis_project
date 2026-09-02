@@ -1,6 +1,6 @@
 # uni_course_management — Selenium Comparison Suite
 
-Selenium WebDriver test suite for [`uni_course_management`](https://github.com/MatejStrlek/uni_course_management), built as the **framework-comparison counterpart** to [`Master-thesis-final-project-code`](../Master-thesis-final-project-code), which implements the same test suite against the same application using Playwright.
+Selenium WebDriver test suite for [`uni_course_management`](https://github.com/MatejStrlek/uni_course_management), built as the **framework-comparison counterpart** to [`Master-thesis-final-project-code`](https://github.com/MatejStrlek/Mater_thesis_final_project), which implements the same test suite against the same application using Playwright.
 
 **Base application**: [`uni_course_management`](https://github.com/MatejStrlek/uni_course_management) — *Rapid Development of Java Applications Using Frameworks*.
 **Tech stack under test**: Spring Boot 3.5 + Thymeleaf (server-rendered UI, session-based auth) with a separate stateless JWT REST API under `/api/**`; H2 in-memory database.
@@ -47,7 +47,7 @@ What differs is scope and purpose. This suite exists to produce comparable measu
 
 ## Test Coverage Plan
 
-Tracks what's been ported so far and what's next, mirrored against the equivalent row in the Playwright suite's own coverage plan (`../Master-thesis-final-project-code/README.md`).
+Tracks what's been ported so far and what's next, mirrored against the equivalent row in the Playwright suite's own coverage plan ([`Master-thesis-final-project-code/README.md`](https://github.com/MatejStrlek/Mater_thesis_final_project/blob/main/README.md)).
 
 | Feature / page | Status | Selenium spec | Playwright equivalent |
 |---|---|---|---|
