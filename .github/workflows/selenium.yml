@@ -55,28 +55,36 @@ jobs:
       # here the way `npx playwright install --with-deps` is for the
       # Playwright side — one concrete, small setup-complexity data point
       # for the comparison, in Selenium's favor for once.
+      #
+      # Uses the default `spec` reporter (piped through `tee`), not a
+      # machine-readable one: `mochawesome` turned out incompatible with
+      # this project's Mocha 12 (`Cannot find module 'mocha/lib/utils'`, an
+      # internal path Mocha removed in a later major, and mochawesome hasn't
+      # been updated since) — a real instance of Selenium's community
+      # reporter ecosystem lagging its own test runner's release cadence.
+      # Mocha's built-in `json` reporter was tried as a fallback and
+      # actually made things worse for CI specifically: it prints nothing
+      # to stdout while running, so a failure showed only "exit code 1" in
+      # the Actions log with the real reason buried in a downloadable
+      # artifact nobody would think to fetch first. `tee`-ing the normal,
+      # human-readable reporter output to a log file (still uploaded below)
+      # keeps the actual failure visible where it's actually read — the
+      # workflow log itself — which is what an artifact should support, not
+      # substitute for. Playwright's default reporters don't have this
+      # trade-off since they print human-readable output to the console by
+      # default already.
       - name: Run Selenium tests
         env:
           BASE_URL: http://localhost:8081
           HEADLESS: "true"
-        run: npm run test:report
+        run: npm test 2>&1 | tee mocha-output.log
       - name: Dump app logs on failure
         if: failure()
         run: docker logs uni-course-management
-      # Mocha's built-in `json` reporter, not a third-party HTML one: the
-      # most common community HTML reporter (mochawesome) turned out to be
-      # incompatible with this project's Mocha 12 (it imports an internal
-      # `mocha/lib/utils` path Mocha removed in a later major version, and
-      # hasn't been updated since) — a real, concrete instance of Selenium's
-      # community-reporter ecosystem lagging its own test runner's release
-      # cadence, worth keeping as-is for the comparison rather than pinning
-      # Mocha to an older version just to get an HTML report. Playwright
-      # ships one first-party HTML reporter that's always in sync by
-      # construction.
-      - name: Upload Mocha JSON report
+      - name: Upload Mocha output log
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: mocha-report
-          path: mocha-report.json
+          name: mocha-output
+          path: mocha-output.log
           retention-days: 30

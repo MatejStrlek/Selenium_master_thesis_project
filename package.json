@@ -4,8 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha",
-    "test:report": "mocha --reporter json --reporter-options output=mocha-report.json"
+    "test": "mocha"
   },
   "keywords": [],
   "type": "commonjs",
