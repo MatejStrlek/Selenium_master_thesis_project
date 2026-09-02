@@ -22,4 +22,16 @@ describe('Login page', () => {
     expect(await driver.findElement({ css: '#password' }).isDisplayed()).to.be.true;
     expect(await driver.findElement({ css: 'button[type=submit]' }).isDisplayed()).to.be.true;
   });
+
+  it('shows an error on invalid credentials', async () => {
+    await loginPage.login('wronguser', 'wrongpassword');
+    const errorMessage = await loginPage.getErrorMessage();
+    expect(errorMessage).to.include('Invalid username or password');
+  });
+
+  it('redirects an unauthenticated visit to a protected route to /login', async () => {
+    await loginPage.goto('/admin/courses');
+    await loginPage.waitForUrlContains('/login');
+    expect(await driver.getCurrentUrl()).to.include('/login');
+  });
 });
