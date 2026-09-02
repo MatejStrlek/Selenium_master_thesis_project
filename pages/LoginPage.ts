@@ -24,4 +24,8 @@ export class LoginPage extends BasePage {
     await this.driver.wait(until.elementIsVisible(alert), timeout);
     return alert.getText();
   }
+
+  async expectLoggedIn(timeout = DEFAULT_TIMEOUT): Promise<void> {
+    await this.waitForUrlContains('/dashboard', timeout);
+  }
 }

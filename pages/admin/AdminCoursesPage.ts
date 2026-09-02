@@ -30,34 +30,6 @@ export class AdminCoursesPage extends BasePage {
   }
 
   /**
-   * A native `.click()` on a below-the-fold row action reliably throws
-   * "element click intercepted" on this environment — Selenium's own
-   * scroll-into-view doesn't actually move the viewport here (`window.scrollY`
-   * stays 0 even after an explicit `window.scrollTo()`), a real, verified
-   * Selenium/ChromeDriver quirk, not an app bug. Dispatching the click via
-   * `executeScript` sidesteps viewport/coordinate calculation entirely and
-   * still triggers the row's real `onsubmit="confirm(...)"` handler.
-   */
-  private async click(element: WebElement): Promise<void> {
-    await this.driver.executeScript('arguments[0].click();', element);
-  }
-
-  /**
-   * A bare `driver.findElement(locator)` is a single, unretried lookup — safe
-   * only when something *else* just confirmed the element's container is
-   * already rendered (e.g. a row found via `findCourseRow`'s own wait).
-   * Right after a fresh navigation (the list page after login, the create/edit
-   * form after clicking into it), nothing has confirmed that yet, and a
-   * one-shot lookup there is a genuine, intermittent race — this is the
-   * Selenium equivalent of the auto-waiting Playwright gets for free on every
-   * action, made explicit and reusable so it isn't accidentally skipped.
-   */
-  private async waitAndClick(locator: By, timeout = DEFAULT_TIMEOUT): Promise<void> {
-    const element = await this.driver.wait(until.elementLocated(locator), timeout);
-    await this.click(element);
-  }
-
-  /**
    * Waits for a marker only the *list* page renders — `[data-testid="create-course-button"]`
    * exists on `/admin/courses` and nowhere else in this flow. Deliberately not
    * `waitForUrlContains('/admin/courses')`: that string is also a substring of
@@ -70,16 +42,10 @@ export class AdminCoursesPage extends BasePage {
     await this.driver.wait(until.elementLocated(By.css('[data-testid="create-course-button"]')), timeout);
   }
 
-  private async setValue(locator: By, value: string): Promise<void> {
-    const input = this.driver.findElement(locator);
-    await input.clear();
-    await input.sendKeys(value);
-  }
-
   private async fillForm(data: CourseFormData): Promise<void> {
-    if (data.courseCode !== undefined) await this.setValue(By.id('courseCode'), data.courseCode);
-    if (data.courseName !== undefined) await this.setValue(By.id('courseName'), data.courseName);
-    if (data.credits !== undefined) await this.setValue(By.id('credits'), String(data.credits));
+    if (data.courseCode !== undefined) await this.fillByLabel('Course Code', data.courseCode);
+    if (data.courseName !== undefined) await this.fillByLabel('Course Name', data.courseName);
+    if (data.credits !== undefined) await this.fillByLabel('Credits', String(data.credits));
   }
 
   async createCourse(data: Required<CourseFormData>): Promise<void> {
