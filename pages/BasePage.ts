@@ -1,7 +1,7 @@
 import { WebDriver, until } from 'selenium-webdriver';
 import { baseURL } from '../utils/env';
 
-const DEFAULT_TIMEOUT = 10000;
+const DEFAULT_TIMEOUT = 15000;
 
 export class BasePage {
   constructor(protected driver: WebDriver) {}

@@ -1,0 +1,82 @@
+name: Selenium Tests
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+jobs:
+  e2e-tests:
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: Install dependencies
+        run: npm ci
+      - name: Start target app (uni_course_management)
+        run: |
+          docker run -d --name uni-course-management -p 8081:8081 \
+            -e MAIL_USERNAME=ci-test@example.com \
+            -e MAIL_PASSWORD=ci-test-password \
+            -e JWT_SECRET=CiTestSecretKeyThatIsAtLeast256BitsLongForHS256AlgorithmOk \
+            ghcr.io/matejstrlek/uni_course_management:latest
+      # Requires 2 *consecutive* 200s, not just one, before declaring the app
+      # ready. Found for real while building this suite: a single successful
+      # poll right after `docker restart` can land in a narrow window where
+      # Tomcat is already accepting connections but the app isn't fully
+      # settled yet, causing the very next real request to behave
+      # inconsistently. The Playwright repo's workflow uses a single-check
+      # loop and hasn't hit this in practice, but it's a real, reproduced
+      # race worth guarding against here rather than re-discovering in CI.
+      - name: Wait for app to be ready
+        run: |
+          ok=0
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8081/login || true)
+            if [ "$code" = "200" ]; then
+              ok=$((ok+1))
+              if [ "$ok" -ge 2 ]; then
+                echo "App confirmed ready after ${i} attempt(s)"
+                exit 0
+              fi
+            else
+              ok=0
+            fi
+            sleep 2
+          done
+          echo "App did not become ready in time"
+          docker logs uni-course-management
+          exit 1
+      # ubuntu-latest ships Chrome preinstalled; Selenium Manager (bundled
+      # with selenium-webdriver 4.6+) resolves a matching chromedriver
+      # automatically, so no separate browser/driver install step is needed
+      # here the way `npx playwright install --with-deps` is for the
+      # Playwright side — one concrete, small setup-complexity data point
+      # for the comparison, in Selenium's favor for once.
+      - name: Run Selenium tests
+        env:
+          BASE_URL: http://localhost:8081
+          HEADLESS: "true"
+        run: npm run test:report
+      - name: Dump app logs on failure
+        if: failure()
+        run: docker logs uni-course-management
+      # Mocha's built-in `json` reporter, not a third-party HTML one: the
+      # most common community HTML reporter (mochawesome) turned out to be
+      # incompatible with this project's Mocha 12 (it imports an internal
+      # `mocha/lib/utils` path Mocha removed in a later major version, and
+      # hasn't been updated since) — a real, concrete instance of Selenium's
+      # community-reporter ecosystem lagging its own test runner's release
+      # cadence, worth keeping as-is for the comparison rather than pinning
+      # Mocha to an older version just to get an HTML report. Playwright
+      # ships one first-party HTML reporter that's always in sync by
+      # construction.
+      - name: Upload Mocha JSON report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: mocha-report
+          path: mocha-report.json
+          retention-days: 30

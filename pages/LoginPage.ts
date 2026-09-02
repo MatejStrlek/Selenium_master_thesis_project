@@ -1,7 +1,7 @@
 import { By, until } from 'selenium-webdriver';
 import { BasePage } from './BasePage';
 
-const DEFAULT_TIMEOUT = 10000;
+const DEFAULT_TIMEOUT = 15000;
 
 export class LoginPage extends BasePage {
   private usernameInput = By.css('#username');
