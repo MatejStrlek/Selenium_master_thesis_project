@@ -1,7 +1,29 @@
 import { Builder, WebDriver } from 'selenium-webdriver';
 import * as chrome from 'selenium-webdriver/chrome';
+import * as firefox from 'selenium-webdriver/firefox';
 
+/**
+ * Thesis Chapter 5, H6 (Cross-Browser Extension Effort). BROWSER=firefox
+ * switches the whole suite to GeckoDriver via Selenium Manager (bundled
+ * with selenium-webdriver 4.6+, same auto-resolution Chrome gets — no
+ * separate driver download step needed). Unlike Chrome, Firefox has no
+ * AppArmor/sandbox flag requirement in CI and (per manual testing while
+ * building this) no equivalent of the headless-viewport navbar-collapse
+ * bug either — but it fails the CSV-export test, since
+ * `driver.setDownloadPath()` is a Chromium DevTools Protocol wrapper with
+ * no Firefox equivalent in this version of selenium-webdriver. See
+ * ../../Master-thesis-final-project-code/benchmark/h6-cross-browser/ for
+ * the full comparison writeup.
+ */
 export async function createDriver(): Promise<WebDriver> {
+  if (process.env.BROWSER === 'firefox') {
+    const options = new firefox.Options();
+    if (process.env.HEADLESS === 'true') {
+      options.addArguments('-headless');
+    }
+    return new Builder().forBrowser('firefox').setFirefoxOptions(options).build();
+  }
+
   const options = new chrome.Options();
   if (process.env.HEADLESS === 'true') {
     // Headless Chrome's default viewport is 764x429 — narrower than the
