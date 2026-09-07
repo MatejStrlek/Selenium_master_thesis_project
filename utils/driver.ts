@@ -1,6 +1,8 @@
+import * as fs from 'fs';
 import { Builder, WebDriver } from 'selenium-webdriver';
 import * as chrome from 'selenium-webdriver/chrome';
 import * as firefox from 'selenium-webdriver/firefox';
+import { DOWNLOAD_DIR } from './downloads';
 
 /**
  * Thesis Chapter 5, H6 (Cross-Browser Extension Effort). BROWSER=firefox
@@ -9,9 +11,7 @@ import * as firefox from 'selenium-webdriver/firefox';
  * separate driver download step needed). Unlike Chrome, Firefox has no
  * AppArmor/sandbox flag requirement in CI and (per manual testing while
  * building this) no equivalent of the headless-viewport navbar-collapse
- * bug either — but it fails the CSV-export test, since
- * `driver.setDownloadPath()` is a Chromium DevTools Protocol wrapper with
- * no Firefox equivalent in this version of selenium-webdriver. See
+ * bug either. See
  * ../../Master-thesis-final-project-code/benchmark/h6-cross-browser/ for
  * the full comparison writeup.
  */
@@ -21,6 +21,19 @@ export async function createDriver(): Promise<WebDriver> {
     if (process.env.HEADLESS === 'true') {
       options.addArguments('-headless');
     }
+    // Firefox has no runtime download-path API (see utils/downloads.ts) —
+    // the download directory is a profile preference that has to be set
+    // before the browser launches, not called on the live driver like
+    // Chrome's setDownloadPath(). `browser.helperApps.neverAsk.saveToDisk`
+    // skips the native "Open/Save" prompt for the CSV export's exact
+    // content type (`response.setContentType("text/csv")` server-side, see
+    // uni_course_management's AdminCourseController/ProfessorCourseController)
+    // so the file actually lands on disk instead of blocking on a dialog
+    // headless Firefox can't dismiss.
+    fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
+    options.setPreference('browser.download.folderList', 2);
+    options.setPreference('browser.download.dir', DOWNLOAD_DIR);
+    options.setPreference('browser.helperApps.neverAsk.saveToDisk', 'text/csv');
     return new Builder().forBrowser('firefox').setFirefoxOptions(options).build();
   }
 

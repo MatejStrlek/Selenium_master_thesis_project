@@ -42,7 +42,15 @@ export class AdminUsersPage extends BasePage {
    * `/admin/users/register` redirects to `/dashboard` on success (not back
    * to the list) — navigates back to `/admin/users` itself once done, so
    * callers don't need to know that quirk (mirrors the Playwright repo's
-   * own `AdminUsersPage.createUser()`).
+   * own `AdminUsersPage.createUser()`). Waiting for that `/dashboard`
+   * redirect to actually land before navigating away again is required,
+   * not defensive: on Firefox, calling `this.open()` right after the
+   * submit click races GeckoDriver's own click-then-navigate completion
+   * timing — confirmed 100% reproducible (H6, see
+   * ../../Master-thesis-final-project-code/docs/FRAMEWORK-EVALUATION-RESULTS.md) —
+   * where the second navigation can start before the first redirect
+   * resolves, leaving the browser stuck mid-navigation instead of on
+   * `/admin/users`, so the new row is never actually there to find.
    */
   async createUser(data: Required<UserFormData>): Promise<void> {
     await this.waitAndClick(By.css('[data-testid="create-user-button"]'));
@@ -54,6 +62,7 @@ export class AdminUsersPage extends BasePage {
     await this.fillByLabel('Email', data.email);
     await this.selectByLabel('Role', data.role);
     await this.waitAndClick(By.css('[data-testid="user-form-submit"]'));
+    await this.waitForUrlContains('/dashboard');
     await this.open();
   }
 
