@@ -66,15 +66,24 @@ export class AdminUsersPage extends BasePage {
     await this.open();
   }
 
+  /**
+   * Same unguarded-redirect race as `createUser()` (see its comment) — the
+   * edit form's submit also redirects (to `/admin/users`), and callers
+   * immediately re-navigate to that same URL. Waiting for the form itself
+   * to go stale confirms the redirect actually landed before returning,
+   * found on Firefox via H6's re-verification pass (GeckoDriver's
+   * click-then-navigate timing again), same as `createUser()`.
+   */
   async editUser(username: string, data: Omit<UserFormData, 'username' | 'password'>): Promise<void> {
     const row = await this.findUserRow(username);
     await this.click(await row.findElement(By.css('[data-testid^="edit-user-"]')));
-    await this.driver.wait(until.elementLocated(By.css('[data-testid="user-form"]')), DEFAULT_TIMEOUT);
+    const form = await this.driver.wait(until.elementLocated(By.css('[data-testid="user-form"]')), DEFAULT_TIMEOUT);
     if (data.firstName) await this.fillByLabel('First Name', data.firstName);
     if (data.lastName) await this.fillByLabel('Last Name', data.lastName);
     if (data.email) await this.fillByLabel('Email', data.email);
     if (data.role) await this.selectByLabel('Role', data.role);
     await this.waitAndClick(By.css('[data-testid="user-form-submit"]'));
+    await this.driver.wait(until.stalenessOf(form), DEFAULT_TIMEOUT);
   }
 
   /** Native `confirm()` dialog, same pattern as AdminCoursesPage.deleteCourse. */

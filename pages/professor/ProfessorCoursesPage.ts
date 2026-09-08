@@ -22,8 +22,17 @@ export class ProfessorCoursesPage extends BasePage {
     return (await this.driver.findElements(this.courseRowLocator(courseCode))).length;
   }
 
+  /**
+   * The same unguarded-redirect race documented on `AdminUsersPage.createUser()`
+   * (H6) — clicking through without waiting let `gradeFirstAvailableStudent()`
+   * grab a `tbody tr` off the still-loading-away courses list page on
+   * Firefox, surfacing as either a stale-element or a missing grade-input
+   * depending on timing. Waiting for the URL to actually land on the
+   * roster page before returning closes it.
+   */
   async manageStudents(courseCode: string): Promise<void> {
     const row = await this.findCourseRow(courseCode);
     await this.click(await row.findElement(By.css('[data-testid^="manage-students-course-"]')));
+    await this.waitForUrlContains('/students');
   }
 }
