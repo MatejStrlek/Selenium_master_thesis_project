@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { BasePage } from '../BasePage';
 import type { ContentFormData } from '../admin/AdminCourseContentPage';
 
-const DEFAULT_TIMEOUT = 15000;
+const DEFAULT_TIMEOUT = 20000;
 
 /**
  * /professor/courses/{courseId}/content — list, create, edit, delete,

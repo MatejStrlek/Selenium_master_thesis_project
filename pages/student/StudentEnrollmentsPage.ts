@@ -2,7 +2,7 @@ import { By, until, WebElement } from 'selenium-webdriver';
 import { expect } from 'chai';
 import { BasePage } from '../BasePage';
 
-const DEFAULT_TIMEOUT = 15000;
+const DEFAULT_TIMEOUT = 20000;
 
 /** /student/courses/my-courses — the student's active enrollments. */
 export class StudentEnrollmentsPage extends BasePage {

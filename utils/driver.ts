@@ -38,6 +38,23 @@ export async function createDriver(): Promise<WebDriver> {
   }
 
   const options = new chrome.Options();
+  // H2 traced this suite's flakiness to tail-latency variance from launching
+  // a fresh Chrome process in nearly every test's beforeEach — most
+  // Chrome starts are fast, but a long enough tail occasionally exceeds the
+  // 15s DEFAULT_TIMEOUT even with 2 retries. These trim first-run overhead
+  // (extension/profile/update machinery Chrome normally does on a fresh
+  // profile) rather than changing the fresh-process-per-test architecture
+  // itself, which is the thing H1/H5 actually measure.
+  options.addArguments(
+    '--disable-extensions',
+    '--disable-background-networking',
+    '--disable-default-apps',
+    '--disable-sync',
+    '--no-first-run',
+    '--metrics-recording-only',
+    '--disable-hang-monitor',
+    '--mute-audio',
+  );
   if (process.env.HEADLESS === 'true') {
     // Headless Chrome's default viewport is 764x429 — narrower than the
     // app's navbar-expand-lg breakpoint (992px), so the whole navbar

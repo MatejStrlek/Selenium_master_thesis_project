@@ -2,7 +2,7 @@ import { By, WebDriver, WebElement, until } from 'selenium-webdriver';
 import { Select } from 'selenium-webdriver/lib/select';
 import { baseURL } from '../utils/env';
 
-const DEFAULT_TIMEOUT = 15000;
+const DEFAULT_TIMEOUT = 20000;
 
 export class BasePage {
   constructor(protected driver: WebDriver) {}

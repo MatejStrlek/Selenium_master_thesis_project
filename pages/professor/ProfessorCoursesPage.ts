@@ -1,7 +1,7 @@
 import { By, until, WebElement } from 'selenium-webdriver';
 import { BasePage } from '../BasePage';
 
-const DEFAULT_TIMEOUT = 15000;
+const DEFAULT_TIMEOUT = 20000;
 
 /** /professor/courses — courses taught by the logged-in professor. */
 export class ProfessorCoursesPage extends BasePage {
